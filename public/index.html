@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document to Language Tree Converter</title>
+</head>
+<body>
+    <h1>Document to Language Tree Converter</h1>
+    <form action ="/upload" method="post" id="upload-form">
+      <input type="file" id="file-input" name="file" accept=".pdf,.docx,.txt">
+      <button type="submit" id="upload-btn">Upload</button>
+    </form>
+
+
+    <h2>Language Tree</h2>
+    <div id="tree-container"></div>
+
+    <script>
+        // Get the container element where the tree will be displayed
+        const treeContainer = document.getElementById('tree-container');
+        const uploadForm = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+
+        // Add an event listener to the form to handle form submission
+        uploadForm.addEventListener('submit', (event) => {
+            // Prevent the default form submission behavior
+            event.preventDefault();
+
+            // Create a FormData object to store the file input data
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            // Make a POST request to the server to get the tree data
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Get the tree data from the response
+                const tree = data.tree;
+                console.log("here " + tree)
+
+                // Check if the tree data is iterable
+                if (Symbol.iterator in Object(tree)) {
+                    // Create a nested HTML list element to display the tree
+                    const list = document.createElement('ul');
+
+                    // Recursively add each node of the tree to the list element
+                    function addNode(node, parent) {
+                        const listItem = document.createElement('li');
+
+                        listItem.innerHTML = `${node.word} (${node.pos})`;
+
+
+                        parent.appendChild(listItem);
+                        if (node.children) {
+                            const childList = document.createElement('ul');
+                            listItem.appendChild(childList);
+                            for (const child of node.children) {
+                                addNode(child, childList);
+                            }
+                        }
+                    }
+
+                    for (const node of tree) {
+                        addNode(node, list);
+                    }
+
+                    // Add the list element to the tree container
+                    treeContainer.appendChild(list);
+                } else {
+                    throw new Error('Invalid tree data');
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                // Display an error message
+                treeContainer.innerHTML = '<p>Error processing file</p>';
+
+            });
+        });
+    </script>
+
+
+</body>
+</html>
+
