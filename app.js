@@ -34,6 +34,11 @@ app.get("/" , (req, res) => {
    //res.render("welcome")
 })
 
+app.get("/tree" , (req, res) => {
+  res.sendFile(path.join(static_path, "index2.html"));
+ //res.render("welcome")
+})
+
 
 
 
@@ -103,71 +108,50 @@ return text;
 //   }
 
 function constructTree(data) {
-    // Construct the language tree from the parsed data here
-    const tokenizer = new natural.WordTokenizer();
-    const posTagger = new natural.BrillPOSTagger(
-      lexicon,
-      rules
-    );
-    const words = tokenizer.tokenize(preprocess(data));
-    const taggedWords = posTagger.tag(words);
-    const taggedWordsArray = Object.values(taggedWords);
+  // Construct the language tree from the parsed data here
+  const tokenizer = new natural.WordTokenizer();
+  const posTagger = new natural.BrillPOSTagger(
+    lexicon,
+    rules
+  );
+  const words = tokenizer.tokenize(preprocess(data));
+  const taggedWords = posTagger.tag(words);
+  const taggedWordsArray = Object.values(taggedWords);
 
-    // console.log(taggedWords);
-    // console.log(taggedWordsArray);
-    
-    if (!Array.isArray(taggedWordsArray)) {
-      console.error('Error: taggedWords is not an array');
-      return null;
-    }
-  
-    const tree = [];
-    for (const [word, pos] of taggedWordsArray) {
-      tree.push({ word, pos });
-    }
-    return tree;
+  if (!Array.isArray(taggedWordsArray)) {
+    console.error('Error: taggedWords is not an array');
+    return null;
   }
+
+  const tree = [];
+  for (const [words, pos] of taggedWordsArray) {
+    tree.push({ words, pos});
+  }
+  return tree;
+}
+
   
   
-
-
-
-// app.post('/upload', upload.single('file'), async (req, res) => {
-//   try {
-//     const data = await fs.promises.readFile(req.file.path, 'utf8');
-//     console.log(data);
-//     const tree = constructTree(data);
-//     console.log(tree);
-//     res.json(tree);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send('Error processing file');
-//   }
-// });
 
 app.post('/upload', upload.single('file'), async (req, res) => {
-    try {
-      const data = await fs.promises.readFile(req.file.path, 'utf8');
-      const tree = constructTree(data);
+  try {
+    const data = await fs.promises.readFile(req.file.path, 'utf8');
+    const tree = constructTree(data);
 
-      console.log(tree);
-    //   res.json(tree);
+    // res.json(tree); // Send the tree object as a JSON response
+    res.json({ tree : tree})
 
-
-      res.json({ tree: tree });
-
-    } catch (error) {
-      console.error(error);
-      res.status(500).send('Error processing file');
-    } finally {
-      fs.unlink(req.file.path, (err) => {
-        if (err) {
-          console.error(err);
-
-        }
-      });
-    }
-  });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error processing file');
+  } finally {
+    fs.unlink(req.file.path, (err) => {
+      if (err) {
+        console.error(err);
+      }
+    });
+  }
+});
 
 
 app.listen(3000, () => {
